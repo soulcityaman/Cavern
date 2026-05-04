@@ -1,0 +1,2264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caverna — A Luxury Cave Café Experience</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  /* ============================================
+     CSS VARIABLES & RESET
+  ============================================ */
+  :root {
+    --cave-black: #0d0a07;
+    --cave-dark: #1a1208;
+    --cave-brown: #2e1f0e;
+    --cave-mid: #4a3520;
+    --cave-warm: #7a5c3a;
+    --cave-stone: #b8967a;
+    --cave-light: #d4b896;
+    --cave-cream: #f0e0c8;
+    --cave-glow: #f5c878;
+    --cave-amber: #e8a84a;
+    --cave-ember: #c8642a;
+    --font-display: 'Cormorant Garamond', serif;
+    --font-body: 'Jost', sans-serif;
+    --transition-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  body {
+    background: var(--cave-black);
+    color: var(--cave-cream);
+    font-family: var(--font-body);
+    font-weight: 200;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* ============================================
+     CUSTOM CURSOR
+  ============================================ */
+  .cursor {
+    width: 8px; height: 8px;
+    background: var(--cave-glow);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    mix-blend-mode: screen;
+    transition: transform 0.1s ease, opacity 0.3s ease;
+    transform: translate(-50%, -50%);
+  }
+  .cursor-ring {
+    width: 36px; height: 36px;
+    border: 1px solid rgba(245,200,120,0.4);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9998;
+    transition: transform 0.18s var(--transition-smooth), width 0.3s, height 0.3s, opacity 0.3s;
+    transform: translate(-50%, -50%);
+  }
+  .cursor.hovering { transform: translate(-50%,-50%) scale(2.5); opacity: 0.6; }
+  .cursor-ring.hovering { width: 56px; height: 56px; border-color: rgba(245,200,120,0.7); }
+
+  /* ============================================
+     AMBIENT PARTICLES CANVAS
+  ============================================ */
+  #particle-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.6;
+  }
+
+  /* ============================================
+     NAVBAR
+  ============================================ */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 2rem 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.6s var(--transition-smooth);
+  }
+  nav.scrolled {
+    background: rgba(13,10,7,0.85);
+    backdrop-filter: blur(20px);
+    padding: 1.2rem 3rem;
+    border-bottom: 1px solid rgba(184,150,122,0.1);
+  }
+  .nav-logo {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    color: var(--cave-cream);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--cave-amber); font-style: italic; }
+  .nav-links {
+    display: flex;
+    gap: 2.5rem;
+    list-style: none;
+  }
+  .nav-links a {
+    color: rgba(240,224,200,0.6);
+    text-decoration: none;
+    font-size: 0.72rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    transition: color 0.3s ease;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; left: 0; right: 0;
+    height: 1px;
+    background: var(--cave-amber);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s var(--transition-smooth);
+  }
+  .nav-links a:hover { color: var(--cave-cream); }
+  .nav-links a:hover::after { transform: scaleX(1); }
+  .nav-book {
+    padding: 0.6rem 1.8rem;
+    border: 1px solid rgba(232,168,74,0.5);
+    color: var(--cave-glow) !important;
+    border-radius: 40px;
+    transition: all 0.4s ease !important;
+  }
+  .nav-book:hover {
+    background: rgba(232,168,74,0.12) !important;
+    border-color: var(--cave-amber) !important;
+  }
+  .nav-book::after { display: none !important; }
+
+  /* ============================================
+     SOUND TOGGLE
+  ============================================ */
+  #sound-toggle {
+    position: fixed;
+    bottom: 2rem; right: 2rem;
+    z-index: 200;
+    background: rgba(13,10,7,0.8);
+    border: 1px solid rgba(184,150,122,0.3);
+    border-radius: 50%;
+    width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: none;
+    color: var(--cave-stone);
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+  }
+  #sound-toggle:hover { border-color: var(--cave-amber); color: var(--cave-glow); }
+  #sound-toggle.active { color: var(--cave-glow); border-color: var(--cave-amber); }
+
+  /* ============================================
+     PROGRESS BAR
+  ============================================ */
+  #progress-bar {
+    position: fixed;
+    left: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    align-items: center;
+  }
+  .progress-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(184,150,122,0.3);
+    transition: all 0.4s ease;
+    cursor: none;
+    position: relative;
+  }
+  .progress-dot.active {
+    background: var(--cave-amber);
+    box-shadow: 0 0 10px var(--cave-amber);
+    transform: scale(1.4);
+  }
+  .progress-dot .dot-label {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(240,224,200,0);
+    white-space: nowrap;
+    transition: color 0.3s ease;
+  }
+  .progress-dot.active .dot-label,
+  .progress-dot:hover .dot-label { color: rgba(240,224,200,0.6); }
+
+  /* ============================================
+     SECTIONS BASE
+  ============================================ */
+  section {
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ============================================
+     SECTION 1: ENTRANCE / HERO
+  ============================================ */
+  #entrance {
+    background: var(--cave-black);
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .entrance-tunnel {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Layered arch SVG tunnel */
+  .tunnel-layer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .arch-ring {
+    position: absolute;
+    border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+    border: 1px solid transparent;
+    transform-origin: center center;
+  }
+
+  /* Warm glow at center of tunnel */
+  .tunnel-glow {
+    position: absolute;
+    width: 40vw; height: 40vh;
+    background: radial-gradient(ellipse, rgba(245,200,120,0.18) 0%, rgba(200,100,42,0.08) 40%, transparent 70%);
+    border-radius: 50%;
+    animation: glowPulse 4s ease-in-out infinite;
+  }
+
+  @keyframes glowPulse {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.08); }
+  }
+
+  /* Push-in zoom effect */
+  .entrance-tunnel { animation: tunnelPush 8s ease-in-out infinite alternate; }
+  @keyframes tunnelPush {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.04); }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .hero-eyebrow {
+    font-size: 0.65rem;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--cave-amber);
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 1.2s var(--transition-smooth) 0.3s forwards;
+  }
+
+  .hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(5rem, 12vw, 10rem);
+    font-weight: 300;
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    color: var(--cave-cream);
+    opacity: 0;
+    animation: fadeUp 1.4s var(--transition-smooth) 0.5s forwards;
+  }
+
+  .hero-title em {
+    font-style: italic;
+    color: var(--cave-amber);
+  }
+
+  .hero-sub {
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(240,224,200,0.5);
+    margin-top: 1.8rem;
+    opacity: 0;
+    animation: fadeUp 1.4s var(--transition-smooth) 0.8s forwards;
+  }
+
+  .hero-scroll-hint {
+    position: absolute;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0;
+    animation: fadeUp 1.4s var(--transition-smooth) 1.5s forwards;
+  }
+
+  .scroll-line {
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, var(--cave-amber), transparent);
+    animation: scrollLine 2s ease-in-out infinite;
+  }
+
+  @keyframes scrollLine {
+    0% { transform: scaleY(0); transform-origin: top; }
+    50% { transform: scaleY(1); transform-origin: top; }
+    51% { transform: scaleY(1); transform-origin: bottom; }
+    100% { transform: scaleY(0); transform-origin: bottom; }
+  }
+
+  .scroll-text {
+    font-size: 0.55rem;
+    letter-spacing: 0.3em;
+    color: rgba(240,224,200,0.3);
+    text-transform: uppercase;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Cave rock silhouettes - entrance */
+  .rock-silhouette {
+    position: absolute;
+    bottom: 0;
+    background: var(--cave-dark);
+    z-index: 5;
+  }
+
+  .rock-left {
+    left: 0;
+    width: 22vw;
+    height: 55vh;
+    clip-path: polygon(0 100%, 0 30%, 30% 10%, 60% 25%, 80% 15%, 100% 40%, 100% 100%);
+    background: linear-gradient(135deg, #1a1208, #0d0a07);
+  }
+
+  .rock-right {
+    right: 0;
+    width: 22vw;
+    height: 60vh;
+    clip-path: polygon(100% 100%, 100% 20%, 70% 5%, 40% 18%, 20% 8%, 0 35%, 0 100%);
+    background: linear-gradient(225deg, #1a1208, #0d0a07);
+  }
+
+  .rock-top {
+    top: 0;
+    left: 0; right: 0;
+    height: 28vh;
+    clip-path: polygon(0 0, 100% 0, 100% 40%, 85% 60%, 70% 45%, 55% 65%, 45% 40%, 30% 55%, 15% 42%, 0 58%);
+    background: linear-gradient(180deg, #0d0a07, #1a1208);
+  }
+
+  /* Hanging vines / ivy */
+  .vine {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, #2a3a1a 0%, #3a5a22 40%, transparent 100%);
+    border-radius: 0 0 4px 4px;
+    z-index: 6;
+    animation: vineWave 6s ease-in-out infinite;
+  }
+  @keyframes vineWave {
+    0%, 100% { transform-origin: top; transform: rotate(-1deg); }
+    50% { transform-origin: top; transform: rotate(1.5deg); }
+  }
+
+  /* ============================================
+     SECTION 2: MAIN SEATING
+  ============================================ */
+  #seating {
+    background: linear-gradient(180deg, var(--cave-dark) 0%, #241608 100%);
+    flex-direction: column;
+    gap: 3rem;
+    padding: 6rem 4rem;
+  }
+
+  .section-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--cave-amber);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .section-label::before {
+    content: '';
+    width: 40px;
+    height: 1px;
+    background: var(--cave-amber);
+    display: inline-block;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 6vw, 6rem);
+    font-weight: 300;
+    line-height: 1.05;
+    color: var(--cave-cream);
+  }
+
+  .section-title em { font-style: italic; color: var(--cave-amber); }
+
+  .section-desc {
+    font-size: 0.85rem;
+    line-height: 1.9;
+    color: rgba(240,224,200,0.5);
+    max-width: 400px;
+    font-weight: 200;
+  }
+
+  /* Seating visual */
+  .seating-visual {
+    width: 100%;
+    max-width: 900px;
+    height: 380px;
+    position: relative;
+    margin: 0 auto;
+  }
+
+  /* Fake table circles */
+  .table-item {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(184,150,122,0.2);
+    background: radial-gradient(circle, rgba(74,53,32,0.6) 0%, rgba(26,18,8,0.4) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.5s var(--transition-smooth);
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+
+  .table-item.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .table-item:hover {
+    border-color: rgba(232,168,74,0.5);
+    box-shadow: 0 0 30px rgba(232,168,74,0.1), 0 0 80px rgba(232,168,74,0.04);
+    transform: scale(1.03);
+  }
+
+  /* Hanging light */
+  .hanging-light {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 10;
+    animation: sway 5s ease-in-out infinite;
+  }
+  @keyframes sway {
+    0%, 100% { transform: translateX(-50%) rotate(-1.5deg); }
+    50% { transform: translateX(-50%) rotate(1.5deg); }
+  }
+  .light-cord { width: 1px; height: 50px; background: rgba(184,150,122,0.4); }
+  .light-bulb {
+    width: 24px; height: 32px;
+    background: radial-gradient(ellipse, #f5d070 0%, #e8a84a 50%, rgba(184,100,42,0.3) 100%);
+    border-radius: 50% 50% 40% 40%;
+    box-shadow: 0 0 20px rgba(245,200,120,0.6), 0 0 60px rgba(245,200,120,0.2), 0 0 120px rgba(232,168,74,0.1);
+    animation: flicker 8s ease-in-out infinite;
+  }
+  @keyframes flicker {
+    0%, 90%, 100% { opacity: 1; }
+    92% { opacity: 0.8; }
+    94% { opacity: 1; }
+    96% { opacity: 0.85; }
+    98% { opacity: 1; }
+  }
+
+  .seating-text {
+    max-width: 1100px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4rem;
+    align-items: end;
+  }
+
+  /* ============================================
+     SECTION 3: LIBRARY
+  ============================================ */
+  #library {
+    background: linear-gradient(160deg, #1e1206 0%, #170e04 50%, #241a0a 100%);
+    padding: 7rem 4rem;
+    flex-direction: row;
+    gap: 6rem;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .library-shelves {
+    width: 380px;
+    flex-shrink: 0;
+    position: relative;
+    height: 480px;
+  }
+
+  .shelf {
+    position: absolute;
+    left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, rgba(74,53,32,0) 0%, rgba(122,92,58,0.8) 20%, rgba(122,92,58,0.9) 80%, rgba(74,53,32,0) 100%);
+    border-radius: 2px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  }
+
+  .shelf-1 { top: 30px; }
+  .shelf-2 { top: 135px; }
+  .shelf-3 { top: 240px; }
+  .shelf-4 { top: 345px; }
+  .shelf-5 { top: 450px; }
+
+  .book-row {
+    position: absolute;
+    left: 10px; right: 10px;
+    display: flex;
+    gap: 4px;
+    align-items: flex-end;
+  }
+  .book-row-1 { top: 50px; }
+  .book-row-2 { top: 155px; }
+  .book-row-3 { top: 260px; }
+  .book-row-4 { top: 365px; }
+
+  .book {
+    flex-shrink: 0;
+    border-radius: 2px 4px 4px 2px;
+    position: relative;
+    cursor: none;
+    transition: transform 0.3s var(--transition-smooth), filter 0.3s ease;
+    transform-origin: bottom center;
+  }
+  .book:hover { transform: translateY(-8px) rotate(-1deg); filter: brightness(1.3); }
+
+  /* Shelf glow animation */
+  .shelf-glow {
+    position: absolute;
+    left: 0; right: 0;
+    height: 60px;
+    background: linear-gradient(to top, rgba(245,200,120,0.06), transparent);
+    pointer-events: none;
+  }
+  .shelf-glow { animation: shelfGlow 3s ease-in-out infinite alternate; }
+  @keyframes shelfGlow {
+    from { opacity: 0.5; }
+    to { opacity: 1; }
+  }
+
+  /* Dust particles near library */
+  .dust-particle {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: rgba(245,200,120,0.6);
+    border-radius: 50%;
+    animation: dustFloat linear infinite;
+  }
+  @keyframes dustFloat {
+    0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 0.5; }
+    100% { transform: translate(var(--dx), var(--dy)) rotate(360deg); opacity: 0; }
+  }
+
+  .library-content { max-width: 420px; }
+
+  /* ============================================
+     SECTION 4: PRIVATE PODS
+  ============================================ */
+  #pods {
+    background: linear-gradient(180deg, #150c03 0%, #1e1408 100%);
+    flex-direction: column;
+    padding: 7rem 4rem;
+    gap: 4rem;
+  }
+
+  .pods-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    max-width: 900px;
+    width: 100%;
+  }
+
+  .pod-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 60% 60% 50% 50% / 30% 30% 70% 70%;
+    aspect-ratio: 3/4;
+    cursor: none;
+    transition: transform 0.6s var(--transition-smooth);
+  }
+
+  .pod-card:hover { transform: scale(1.03); }
+
+  .pod-interior {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Pod illustration using CSS */
+  .pod-bg {
+    position: absolute;
+    inset: 0;
+    transition: transform 0.6s var(--transition-smooth);
+  }
+  .pod-card:hover .pod-bg { transform: scale(1.08); }
+
+  .pod-door {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50%;
+    height: 75%;
+    border-radius: 50% 50% 0 0;
+    border: 2px solid rgba(184,150,122,0.5);
+    background: linear-gradient(160deg, rgba(74,53,32,0.9), rgba(26,18,8,0.95));
+    box-shadow: inset 0 0 30px rgba(245,200,120,0.05), 0 0 40px rgba(0,0,0,0.8);
+  }
+
+  .pod-light {
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px; height: 8px;
+    background: var(--cave-glow);
+    border-radius: 50%;
+    box-shadow: 0 0 20px var(--cave-glow), 0 0 60px rgba(245,200,120,0.3), 0 0 120px rgba(245,200,120,0.1);
+    animation: flicker 6s ease-in-out infinite;
+  }
+
+  .pod-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(13,10,7,0.9) 0%, transparent 60%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 2rem;
+    gap: 0.8rem;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .pod-card:hover .pod-overlay { opacity: 1; }
+
+  .pod-overlay h3 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 300;
+    color: var(--cave-cream);
+  }
+
+  .pod-cta {
+    display: inline-block;
+    padding: 0.5rem 1.4rem;
+    border: 1px solid rgba(232,168,74,0.6);
+    border-radius: 30px;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cave-glow);
+    transition: all 0.3s ease;
+    width: fit-content;
+  }
+  .pod-cta:hover { background: rgba(232,168,74,0.15); }
+
+  .pods-header {
+    text-align: center;
+    max-width: 600px;
+  }
+
+  /* ============================================
+     SECTION 5: PHOTOBOOTH
+  ============================================ */
+  #photobooth {
+    background: linear-gradient(180deg, #1a1005 0%, #0f0904 100%);
+    flex-direction: column;
+    align-items: center;
+    gap: 3rem;
+    padding: 7rem 4rem;
+  }
+
+  .neon-text {
+    font-family: var(--font-display);
+    font-size: clamp(3.5rem, 8vw, 7rem);
+    font-weight: 300;
+    font-style: italic;
+    color: var(--cave-glow);
+    text-shadow:
+      0 0 10px rgba(245,200,120,0.8),
+      0 0 30px rgba(245,200,120,0.4),
+      0 0 80px rgba(245,200,120,0.15),
+      0 0 150px rgba(200,100,42,0.1);
+    animation: neonFlicker 5s ease-in-out infinite;
+  }
+
+  @keyframes neonFlicker {
+    0%, 95%, 100% {
+      text-shadow:
+        0 0 10px rgba(245,200,120,0.8),
+        0 0 30px rgba(245,200,120,0.4),
+        0 0 80px rgba(245,200,120,0.15),
+        0 0 150px rgba(200,100,42,0.1);
+    }
+    96% {
+      text-shadow:
+        0 0 5px rgba(245,200,120,0.4),
+        0 0 15px rgba(245,200,120,0.2);
+    }
+    97% {
+      text-shadow:
+        0 0 10px rgba(245,200,120,0.8),
+        0 0 30px rgba(245,200,120,0.4),
+        0 0 80px rgba(245,200,120,0.15);
+    }
+  }
+
+  .camera-frame {
+    width: 280px;
+    height: 210px;
+    border: 2px solid rgba(184,150,122,0.3);
+    border-radius: 16px;
+    position: relative;
+    background: rgba(26,16,5,0.6);
+    overflow: hidden;
+    cursor: none;
+  }
+
+  .camera-frame::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    background: linear-gradient(135deg, transparent 0%, rgba(245,200,120,0.03) 100%);
+  }
+
+  .camera-crosshair {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .crosshair-circle {
+    width: 80px; height: 80px;
+    border: 1px solid rgba(245,200,120,0.4);
+    border-radius: 50%;
+    position: relative;
+  }
+
+  .crosshair-line-h, .crosshair-line-v {
+    position: absolute;
+    background: rgba(245,200,120,0.3);
+  }
+  .crosshair-line-h { width: 60px; height: 1px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+  .crosshair-line-v { height: 60px; width: 1px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+
+  .flash-overlay {
+    position: fixed;
+    inset: 0;
+    background: white;
+    z-index: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.05s ease;
+  }
+  .flash-overlay.flashing { animation: cameraFlash 0.5s ease forwards; }
+
+  @keyframes cameraFlash {
+    0% { opacity: 0; }
+    15% { opacity: 0.95; }
+    100% { opacity: 0; }
+  }
+
+  .photo-cta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .btn-primary {
+    padding: 1rem 3rem;
+    border: 1px solid rgba(232,168,74,0.5);
+    border-radius: 50px;
+    font-family: var(--font-body);
+    font-size: 0.7rem;
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--cave-glow);
+    background: transparent;
+    cursor: none;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s ease;
+  }
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(232,168,74,0.15) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .btn-primary:hover { border-color: var(--cave-amber); letter-spacing: 0.3em; }
+  .btn-primary:hover::before { opacity: 1; }
+
+  /* ============================================
+     SECTION 6: KITCHEN / COFFEE BAR
+  ============================================ */
+  #kitchen {
+    background: linear-gradient(180deg, #110a02 0%, #1a1005 100%);
+    flex-direction: row;
+    gap: 6rem;
+    padding: 7rem 6rem;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .kitchen-visual {
+    width: 420px;
+    flex-shrink: 0;
+    position: relative;
+    height: 450px;
+  }
+
+  /* Coffee counter shape */
+  .counter-shape {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 320px;
+    height: 200px;
+    background: linear-gradient(170deg, #3a2810, #2a1a08);
+    border-radius: 50% 50% 20px 20px / 30% 30% 20px 20px;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.5), inset 0 2px 15px rgba(245,200,120,0.05);
+    border-top: 1px solid rgba(122,92,58,0.4);
+  }
+
+  /* Steam animation */
+  .steam-wrap {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 14px;
+  }
+  .steam {
+    width: 2px;
+    height: 60px;
+    background: linear-gradient(to top, rgba(255,255,255,0.25), transparent);
+    border-radius: 4px;
+    animation: steamRise 2.5s ease-in-out infinite;
+    transform-origin: bottom center;
+  }
+  .steam:nth-child(2) { animation-delay: 0.4s; height: 45px; }
+  .steam:nth-child(3) { animation-delay: 0.8s; height: 55px; }
+  .steam:nth-child(4) { animation-delay: 0.2s; height: 40px; }
+
+  @keyframes steamRise {
+    0% { transform: translateY(0) scaleX(1); opacity: 0; }
+    30% { opacity: 1; }
+    100% { transform: translateY(-70px) scaleX(2.5); opacity: 0; }
+  }
+
+  /* Coffee cup illustration */
+  .coffee-cup {
+    position: absolute;
+    top: 28%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px; height: 90px;
+  }
+  .cup-body {
+    width: 70px; height: 70px;
+    background: linear-gradient(160deg, #2a1a08, #1a1005);
+    border: 1px solid rgba(122,92,58,0.5);
+    border-radius: 6px 6px 14px 14px;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    overflow: hidden;
+  }
+  .cup-body::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 30%;
+    background: linear-gradient(180deg, rgba(160,80,20,0.6), rgba(100,50,10,0.3));
+    border-radius: 3px 3px 0 0;
+  }
+  .cup-saucer {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px; height: 10px;
+    background: linear-gradient(90deg, rgba(74,53,32,0), rgba(122,92,58,0.7), rgba(74,53,32,0));
+    border-radius: 50%;
+  }
+
+  /* Shelf items behind counter */
+  .shelf-row {
+    position: absolute;
+    top: 5%;
+    left: 10px; right: 10px;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    height: 80px;
+    border-bottom: 1px solid rgba(122,92,58,0.3);
+    padding-bottom: 8px;
+  }
+
+  .jar {
+    border-radius: 8px 8px 4px 4px;
+    background: linear-gradient(160deg, rgba(74,53,32,0.6), rgba(26,18,8,0.8));
+    border: 1px solid rgba(122,92,58,0.3);
+    position: relative;
+  }
+  .jar::after {
+    content: '';
+    position: absolute;
+    top: 4px; left: 4px; right: 4px;
+    height: 35%;
+    background: rgba(245,200,120,0.04);
+    border-radius: 3px;
+  }
+
+  .glow-line {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(245,200,120,0.4), transparent);
+    box-shadow: 0 0 20px rgba(245,200,120,0.2);
+    animation: glowLine 3s ease-in-out infinite alternate;
+  }
+  @keyframes glowLine { from { opacity: 0.4; } to { opacity: 1; } }
+
+  .kitchen-content { max-width: 420px; }
+
+  /* ============================================
+     SECTION 7: MENU PREVIEW
+  ============================================ */
+  #menu-preview {
+    background: linear-gradient(180deg, #110a02 0%, #0d0a07 100%);
+    flex-direction: column;
+    padding: 7rem 4rem;
+    gap: 4rem;
+    align-items: center;
+  }
+
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    max-width: 900px;
+    width: 100%;
+  }
+
+  .menu-card {
+    border: 1px solid rgba(184,150,122,0.12);
+    border-radius: 20px;
+    padding: 2rem 1.5rem;
+    background: rgba(26,18,8,0.5);
+    transition: all 0.5s var(--transition-smooth);
+    cursor: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .menu-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(232,168,74,0.06), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .menu-card:hover {
+    border-color: rgba(232,168,74,0.3);
+    transform: translateY(-6px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 30px rgba(232,168,74,0.04);
+  }
+  .menu-card:hover::before { opacity: 1; }
+
+  .menu-item-icon {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    filter: saturate(0.8);
+  }
+
+  .menu-item-name {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 300;
+    color: var(--cave-light);
+    margin-bottom: 0.4rem;
+  }
+
+  .menu-item-desc {
+    font-size: 0.72rem;
+    color: rgba(240,224,200,0.4);
+    line-height: 1.7;
+    font-weight: 200;
+  }
+
+  .menu-item-price {
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: var(--cave-amber);
+    letter-spacing: 0.1em;
+  }
+
+  /* ============================================
+     SECTION 8: FOOTER / BOOK
+  ============================================ */
+  #book-section {
+    background: var(--cave-dark);
+    flex-direction: column;
+    gap: 2rem;
+    padding: 8rem 4rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    border-top: 1px solid rgba(184,150,122,0.08);
+  }
+
+  .book-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px; height: 300px;
+    background: radial-gradient(ellipse, rgba(232,168,74,0.04) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .book-title {
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 7vw, 7rem);
+    font-weight: 300;
+    color: var(--cave-cream);
+    line-height: 1;
+  }
+  .book-title em { color: var(--cave-amber); font-style: italic; }
+
+  .book-sub {
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(240,224,200,0.35);
+  }
+
+  footer {
+    background: var(--cave-black);
+    padding: 2rem 4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(184,150,122,0.08);
+  }
+
+  .footer-logo {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    color: var(--cave-stone);
+    font-weight: 300;
+  }
+
+  .footer-copy {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: rgba(240,224,200,0.25);
+    text-transform: uppercase;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+  .footer-links a {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(240,224,200,0.35);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+  .footer-links a:hover { color: var(--cave-stone); }
+
+  /* ============================================
+     SCROLL-TRIGGERED REVEAL
+  ============================================ */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.9s var(--transition-smooth), transform 0.9s var(--transition-smooth);
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.25s; }
+  .reveal-delay-3 { transition-delay: 0.4s; }
+
+  /* ============================================
+     LOADING SCREEN
+  ============================================ */
+  #loader {
+    position: fixed;
+    inset: 0;
+    background: var(--cave-black);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+  }
+  #loader.hidden { opacity: 0; visibility: hidden; }
+
+  .loader-logo {
+    font-family: var(--font-display);
+    font-size: 4rem;
+    font-weight: 300;
+    color: var(--cave-cream);
+    opacity: 0;
+    animation: loaderFade 1s ease 0.3s forwards;
+  }
+  .loader-logo em { color: var(--cave-amber); font-style: italic; }
+
+  .loader-line-wrap {
+    width: 200px;
+    height: 1px;
+    background: rgba(184,150,122,0.2);
+    overflow: hidden;
+    border-radius: 1px;
+  }
+  .loader-line {
+    height: 100%;
+    background: linear-gradient(90deg, var(--cave-amber), var(--cave-glow));
+    animation: loadLine 1.8s var(--transition-smooth) forwards;
+    border-radius: 1px;
+  }
+  @keyframes loadLine { from { width: 0; } to { width: 100%; } }
+
+  .loader-text {
+    font-size: 0.6rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: rgba(240,224,200,0.3);
+    opacity: 0;
+    animation: loaderFade 1s ease 0.5s forwards;
+  }
+  @keyframes loaderFade { to { opacity: 1; } }
+
+  /* ============================================
+     MOBILE RESPONSIVENESS
+  ============================================ */
+  @media (max-width: 768px) {
+    nav { padding: 1.5rem; }
+    nav.scrolled { padding: 1rem 1.5rem; }
+    .nav-links { display: none; }
+    #library { flex-direction: column; padding: 5rem 2rem; gap: 3rem; }
+    .library-shelves { width: 100%; max-width: 340px; margin: 0 auto; }
+    #kitchen { flex-direction: column; padding: 5rem 2rem; gap: 3rem; }
+    .kitchen-visual { width: 100%; max-width: 340px; margin: 0 auto; }
+    .pods-grid { grid-template-columns: 1fr; max-width: 340px; }
+    .menu-grid { grid-template-columns: 1fr; max-width: 400px; }
+    #seating { padding: 5rem 2rem; }
+    .seating-text { grid-template-columns: 1fr; gap: 2rem; }
+    footer { flex-direction: column; gap: 1.5rem; text-align: center; }
+    #progress-bar { display: none; }
+  }
+
+  /* ============================================
+     MISC HELPERS
+  ============================================ */
+  .stone-texture {
+    position: absolute;
+    inset: 0;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+  }
+
+  .cave-arch-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  /* Vignette on hero */
+  .vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 30%, rgba(13,10,7,0.7) 100%);
+    z-index: 3;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div id="loader">
+  <div class="loader-logo">Cav<em>erna</em></div>
+  <div class="loader-line-wrap"><div class="loader-line"></div></div>
+  <div class="loader-text">Entering the cave&hellip;</div>
+</div>
+
+<!-- FLASH OVERLAY -->
+<div class="flash-overlay" id="flash-overlay"></div>
+
+<!-- CUSTOM CURSOR -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<!-- AMBIENT PARTICLES CANVAS -->
+<canvas id="particle-canvas"></canvas>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">Cav<span>erna</span></a>
+  <ul class="nav-links">
+    <li><a href="#entrance">Home</a></li>
+    <li><a href="#seating">Experience</a></li>
+    <li><a href="#menu-preview">Menu</a></li>
+    <li><a href="#pods">Private Pods</a></li>
+    <li><a href="#book-section" class="nav-book">Book Now</a></li>
+  </ul>
+</nav>
+
+<!-- SCROLL PROGRESS DOTS -->
+<div id="progress-bar">
+  <div class="progress-dot active" data-section="entrance"><span class="dot-label">Entrance</span></div>
+  <div class="progress-dot" data-section="seating"><span class="dot-label">Seating</span></div>
+  <div class="progress-dot" data-section="library"><span class="dot-label">Library</span></div>
+  <div class="progress-dot" data-section="pods"><span class="dot-label">Private Pods</span></div>
+  <div class="progress-dot" data-section="photobooth"><span class="dot-label">Photobooth</span></div>
+  <div class="progress-dot" data-section="kitchen"><span class="dot-label">Kitchen</span></div>
+  <div class="progress-dot" data-section="book-section"><span class="dot-label">Reserve</span></div>
+</div>
+
+<!-- SOUND TOGGLE -->
+<button id="sound-toggle" title="Toggle ambient sound">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+    <path id="sound-waves" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>
+  </svg>
+</button>
+
+<!-- ==========================================
+     SECTION 1: ENTRANCE
+=========================================== -->
+<section id="entrance">
+  <div class="entrance-tunnel" id="tunnel">
+    <!-- Layered arch rings -->
+    <svg style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="tunnelGlow" cx="50%" cy="55%" r="50%">
+          <stop offset="0%" stop-color="#f5c878" stop-opacity="0.15"/>
+          <stop offset="40%" stop-color="#c8642a" stop-opacity="0.06"/>
+          <stop offset="100%" stop-color="#0d0a07" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="blur4"><feGaussianBlur stdDeviation="4"/></filter>
+        <filter id="blur12"><feGaussianBlur stdDeviation="12"/></filter>
+        <filter id="blur20"><feGaussianBlur stdDeviation="20"/></filter>
+      </defs>
+
+      <!-- Cave background gradient -->
+      <rect width="1440" height="900" fill="#0f0902"/>
+      <rect width="1440" height="900" fill="url(#tunnelGlow)"/>
+
+      <!-- Outer rock mass -->
+      <path d="M0,0 L1440,0 L1440,900 L0,900 Z" fill="#0d0a07"/>
+
+      <!-- Arch 6 (outermost) -->
+      <ellipse cx="720" cy="490" rx="660" ry="520" fill="#15100a" stroke="rgba(74,53,32,0.25)" stroke-width="1"/>
+      <!-- Arch 5 -->
+      <ellipse cx="720" cy="490" rx="570" ry="450" fill="#1a1208" stroke="rgba(74,53,32,0.3)" stroke-width="1"/>
+      <!-- Arch 4 -->
+      <ellipse cx="720" cy="490" rx="480" ry="380" fill="#1f1509" stroke="rgba(100,72,40,0.3)" stroke-width="1"/>
+      <!-- Arch 3 -->
+      <ellipse cx="720" cy="490" rx="390" ry="310" fill="#251a0b" stroke="rgba(122,92,58,0.35)" stroke-width="1.5"/>
+      <!-- Arch 2 -->
+      <ellipse cx="720" cy="490" rx="300" ry="240" fill="#2e2010" stroke="rgba(150,110,70,0.35)" stroke-width="1.5"/>
+      <!-- Arch 1 (innermost) -->
+      <ellipse cx="720" cy="490" rx="210" ry="170" fill="#3a2a12" stroke="rgba(180,130,80,0.4)" stroke-width="2"/>
+
+      <!-- Tunnel glow center -->
+      <ellipse cx="720" cy="490" rx="140" ry="110" fill="rgba(245,200,120,0.12)" filter="url(#blur20)"/>
+      <ellipse cx="720" cy="490" rx="80" ry="60" fill="rgba(245,200,120,0.18)" filter="url(#blur12)"/>
+      <ellipse cx="720" cy="490" rx="30" ry="24" fill="rgba(245,220,150,0.3)" filter="url(#blur4)"/>
+
+      <!-- Rock texture cracks -->
+      <path d="M200,100 Q220,150 210,200 Q215,250 200,300" stroke="rgba(184,150,122,0.08)" stroke-width="1.5" fill="none"/>
+      <path d="M1240,80 Q1220,130 1230,180 Q1225,230 1240,280" stroke="rgba(184,150,122,0.08)" stroke-width="1.5" fill="none"/>
+      <path d="M400,20 Q380,60 390,100 Q385,130 400,160" stroke="rgba(184,150,122,0.06)" stroke-width="1" fill="none"/>
+      <path d="M100,400 Q130,380 160,400 Q180,390 200,410" stroke="rgba(184,150,122,0.07)" stroke-width="1" fill="none"/>
+      <path d="M1300,350 Q1270,370 1260,350 Q1240,365 1250,380" stroke="rgba(184,150,122,0.07)" stroke-width="1" fill="none"/>
+
+      <!-- Hanging stalactites top -->
+      <ellipse cx="150" cy="0" rx="60" ry="120" fill="#0d0a07"/>
+      <ellipse cx="350" cy="0" rx="80" ry="90" fill="#0d0a07"/>
+      <ellipse cx="600" cy="0" rx="50" ry="70" fill="#0d0a07"/>
+      <ellipse cx="850" cy="0" rx="70" ry="100" fill="#0d0a07"/>
+      <ellipse cx="1080" cy="0" rx="60" ry="80" fill="#0d0a07"/>
+      <ellipse cx="1280" cy="0" rx="90" ry="110" fill="#0d0a07"/>
+
+      <!-- Bottom rock formations -->
+      <ellipse cx="100" cy="900" rx="180" ry="120" fill="#0d0a07"/>
+      <ellipse cx="400" cy="900" rx="200" ry="90" fill="#0d0a07"/>
+      <ellipse cx="1050" cy="900" rx="220" ry="100" fill="#0d0a07"/>
+      <ellipse cx="1340" cy="900" rx="160" ry="130" fill="#0d0a07"/>
+
+      <!-- Ambient light points on walls -->
+      <circle cx="260" cy="350" r="4" fill="rgba(245,200,120,0.5)" filter="url(#blur4)"/>
+      <circle cx="260" cy="350" r="16" fill="rgba(245,200,120,0.08)" filter="url(#blur12)"/>
+      <circle cx="1180" cy="380" r="4" fill="rgba(245,200,120,0.5)" filter="url(#blur4)"/>
+      <circle cx="1180" cy="380" r="16" fill="rgba(245,200,120,0.08)" filter="url(#blur12)"/>
+      <circle cx="450" cy="200" r="3" fill="rgba(245,200,120,0.4)" filter="url(#blur4)"/>
+      <circle cx="990" cy="220" r="3" fill="rgba(245,200,120,0.4)" filter="url(#blur4)"/>
+
+      <!-- Ivy/vine hints -->
+      <path d="M180,0 Q185,40 175,80 Q180,120 170,160" stroke="rgba(50,80,30,0.25)" stroke-width="2" fill="none"/>
+      <path d="M1260,0 Q1255,35 1265,75 Q1260,110 1270,150" stroke="rgba(50,80,30,0.2)" stroke-width="2" fill="none"/>
+    </svg>
+  </div>
+
+  <div class="vignette"></div>
+
+  <div class="hero-content">
+    <p class="hero-eyebrow">Jaipur's Most Immersive Space</p>
+    <h1 class="hero-title">Cav<em>erna</em></h1>
+    <p class="hero-sub">Where stone meets soul &mdash; A luxury cave café</p>
+  </div>
+
+  <div class="hero-scroll-hint">
+    <div class="scroll-line"></div>
+    <span class="scroll-text">Scroll to enter</span>
+  </div>
+</section>
+
+<!-- ==========================================
+     SECTION 2: MAIN SEATING
+=========================================== -->
+<section id="seating">
+  <div class="stone-texture"></div>
+  <div style="width:100%;max-width:1100px;display:flex;flex-direction:column;gap:3rem;">
+    <div class="seating-text">
+      <div>
+        <p class="section-label reveal">Main Seating Area</p>
+        <h2 class="section-title reveal reveal-delay-1">Open under<br><em>ancient stone</em></h2>
+      </div>
+      <p class="section-desc reveal reveal-delay-2">Forty hand-carved tables beneath arched cave ceilings. Each seat is a private world, lit by handblown lanterns that sway like living things.</p>
+    </div>
+
+    <!-- Seating visual: top-down café view using CSS -->
+    <div class="seating-visual reveal reveal-delay-3">
+      <svg width="100%" height="380" viewBox="0 0 900 380" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+        <defs>
+          <radialGradient id="floorGrad" cx="50%" cy="50%" r="60%">
+            <stop offset="0%" stop-color="#2e1f0e" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#1a1208" stop-opacity="0.4"/>
+          </radialGradient>
+          <filter id="tableBlur"><feGaussianBlur stdDeviation="2"/></filter>
+          <radialGradient id="tableGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="rgba(245,200,120,0.15)"/>
+            <stop offset="100%" stop-color="transparent"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Floor -->
+        <ellipse cx="450" cy="200" rx="430" ry="180" fill="url(#floorGrad)" stroke="rgba(122,92,58,0.15)" stroke-width="1"/>
+
+        <!-- Tables (top-view circles) -->
+        <!-- Row 1 -->
+        <g class="table-group">
+          <circle cx="180" cy="140" r="38" fill="rgba(74,53,32,0.7)" stroke="rgba(184,150,122,0.25)" stroke-width="1.5"/>
+          <circle cx="180" cy="140" r="28" fill="rgba(58,40,18,0.8)" stroke="rgba(184,150,122,0.15)" stroke-width="1"/>
+          <circle cx="180" cy="140" r="6" fill="rgba(245,200,120,0.3)"/>
+          <!-- Stools -->
+          <circle cx="180" cy="96" r="9" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="180" cy="184" r="9" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="136" cy="140" r="9" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="224" cy="140" r="9" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <!-- Light above -->
+          <circle cx="180" cy="60" r="5" fill="#f5c878" opacity="0.7"/>
+          <circle cx="180" cy="60" r="18" fill="rgba(245,200,120,0.08)" filter="url(#tableBlur)"/>
+          <line x1="180" y1="60" x2="180" y2="102" stroke="rgba(184,150,122,0.3)" stroke-width="1"/>
+        </g>
+
+        <g class="table-group">
+          <circle cx="340" cy="110" r="34" fill="rgba(74,53,32,0.7)" stroke="rgba(184,150,122,0.25)" stroke-width="1.5"/>
+          <circle cx="340" cy="110" r="24" fill="rgba(58,40,18,0.8)" stroke="rgba(184,150,122,0.15)" stroke-width="1"/>
+          <circle cx="340" cy="110" r="6" fill="rgba(245,200,120,0.3)"/>
+          <circle cx="340" cy="70" r="8" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="340" cy="150" r="8" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="300" cy="110" r="8" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="380" cy="110" r="8" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="340" cy="38" r="4" fill="#f5c878" opacity="0.6"/>
+          <line x1="340" y1="38" x2="340" y2="76" stroke="rgba(184,150,122,0.3)" stroke-width="1"/>
+        </g>
+
+        <g class="table-group">
+          <circle cx="510" cy="130" r="40" fill="rgba(74,53,32,0.7)" stroke="rgba(184,150,122,0.25)" stroke-width="1.5"/>
+          <circle cx="510" cy="130" r="30" fill="rgba(58,40,18,0.8)" stroke="rgba(184,150,122,0.15)" stroke-width="1"/>
+          <circle cx="510" cy="130" r="6" fill="rgba(245,200,120,0.3)"/>
+          <circle cx="510" cy="84" r="9" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="510" cy="176" r="9" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="464" cy="130" r="9" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="556" cy="130" r="9" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="510" cy="50" r="5" fill="#f5c878" opacity="0.7"/>
+          <line x1="510" y1="50" x2="510" y2="90" stroke="rgba(184,150,122,0.3)" stroke-width="1"/>
+        </g>
+
+        <g class="table-group">
+          <circle cx="680" cy="120" r="36" fill="rgba(74,53,32,0.7)" stroke="rgba(184,150,122,0.25)" stroke-width="1.5"/>
+          <circle cx="680" cy="120" r="26" fill="rgba(58,40,18,0.8)" stroke="rgba(184,150,122,0.15)" stroke-width="1"/>
+          <circle cx="680" cy="120" r="6" fill="rgba(245,200,120,0.3)"/>
+          <circle cx="680" cy="78" r="8" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="680" cy="162" r="8" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="638" cy="120" r="8" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="722" cy="120" r="8" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="680" cy="42" r="4" fill="#f5c878" opacity="0.6"/>
+          <line x1="680" y1="42" x2="680" y2="84" stroke="rgba(184,150,122,0.3)" stroke-width="1"/>
+        </g>
+
+        <!-- Row 2 -->
+        <g class="table-group">
+          <circle cx="250" cy="265" r="38" fill="rgba(74,53,32,0.7)" stroke="rgba(184,150,122,0.25)" stroke-width="1.5"/>
+          <circle cx="250" cy="265" r="28" fill="rgba(58,40,18,0.8)" stroke="rgba(184,150,122,0.15)" stroke-width="1"/>
+          <circle cx="250" cy="265" r="6" fill="rgba(245,200,120,0.3)"/>
+          <circle cx="250" cy="221" r="9" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="250" cy="309" r="9" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="206" cy="265" r="9" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="294" cy="265" r="9" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="250" cy="185" r="5" fill="#f5c878" opacity="0.6"/>
+          <line x1="250" y1="185" x2="250" y2="227" stroke="rgba(184,150,122,0.3)" stroke-width="1"/>
+        </g>
+
+        <g class="table-group">
+          <circle cx="450" cy="275" r="42" fill="rgba(74,53,32,0.7)" stroke="rgba(184,150,122,0.25)" stroke-width="1.5"/>
+          <circle cx="450" cy="275" r="32" fill="rgba(58,40,18,0.8)" stroke="rgba(184,150,122,0.15)" stroke-width="1"/>
+          <circle cx="450" cy="275" r="7" fill="rgba(245,200,120,0.35)"/>
+          <circle cx="450" cy="227" r="10" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="450" cy="323" r="10" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="402" cy="275" r="10" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="498" cy="275" r="10" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="450" cy="195" r="6" fill="#f5d070" opacity="0.8"/>
+          <circle cx="450" cy="195" r="20" fill="rgba(245,200,120,0.1)" filter="url(#tableBlur)"/>
+          <line x1="450" y1="195" x2="450" y2="233" stroke="rgba(184,150,122,0.35)" stroke-width="1"/>
+        </g>
+
+        <g class="table-group">
+          <circle cx="660" cy="265" r="38" fill="rgba(74,53,32,0.7)" stroke="rgba(184,150,122,0.25)" stroke-width="1.5"/>
+          <circle cx="660" cy="265" r="28" fill="rgba(58,40,18,0.8)" stroke="rgba(184,150,122,0.15)" stroke-width="1"/>
+          <circle cx="660" cy="265" r="6" fill="rgba(245,200,120,0.3)"/>
+          <circle cx="660" cy="221" r="9" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="660" cy="309" r="9" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="616" cy="265" r="9" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="704" cy="265" r="9" fill="rgba(46,31,14,0.9)" stroke="rgba(122,92,58,0.3)" stroke-width="1"/>
+          <circle cx="660" cy="185" r="5" fill="#f5c878" opacity="0.6"/>
+          <line x1="660" y1="185" x2="660" y2="227" stroke="rgba(184,150,122,0.3)" stroke-width="1"/>
+        </g>
+
+        <!-- Sofa/lounge area bottom -->
+        <rect x="50" y="320" width="220" height="50" rx="25" fill="rgba(58,40,18,0.6)" stroke="rgba(122,92,58,0.25)" stroke-width="1"/>
+        <rect x="680" y="320" width="200" height="50" rx="25" fill="rgba(58,40,18,0.6)" stroke="rgba(122,92,58,0.25)" stroke-width="1"/>
+
+        <!-- Floor grid hint -->
+        <pattern id="grid" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+          <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(184,150,122,0.04)" stroke-width="1"/>
+        </pattern>
+        <ellipse cx="450" cy="200" rx="420" ry="175" fill="url(#grid)" opacity="0.5"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================
+     SECTION 3: LIBRARY CORNER
+=========================================== -->
+<section id="library">
+  <div class="stone-texture"></div>
+
+  <div class="library-shelves reveal">
+    <!-- Dust particles generated by JS -->
+    <div id="dust-container" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;"></div>
+
+    <svg width="100%" height="480" viewBox="0 0 380 480" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="shelfGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="rgba(74,53,32,0)"/>
+          <stop offset="20%" stop-color="rgba(122,92,58,0.9)"/>
+          <stop offset="80%" stop-color="rgba(122,92,58,0.9)"/>
+          <stop offset="100%" stop-color="rgba(74,53,32,0)"/>
+        </linearGradient>
+        <filter id="bookGlow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="softBlur"><feGaussianBlur stdDeviation="8"/></filter>
+      </defs>
+
+      <!-- Wall background -->
+      <rect width="380" height="480" fill="#1e1206" rx="8"/>
+      <rect width="380" height="480" fill="url(#shelfGrad)" opacity="0.08" rx="8"/>
+
+      <!-- Shelf glow lines -->
+      <rect x="0" y="118" width="380" height="2" fill="url(#shelfGrad)"/>
+      <rect x="0" y="225" width="380" height="2" fill="url(#shelfGrad)"/>
+      <rect x="0" y="332" width="380" height="2" fill="url(#shelfGrad)"/>
+      <rect x="0" y="440" width="380" height="2" fill="url(#shelfGrad)"/>
+      <rect x="0" y="28" width="380" height="2" fill="url(#shelfGrad)"/>
+
+      <!-- Shelf glow -->
+      <rect x="0" y="106" width="380" height="14" fill="rgba(245,200,120,0.04)" filter="url(#softBlur)"/>
+      <rect x="0" y="213" width="380" height="14" fill="rgba(245,200,120,0.04)" filter="url(#softBlur)"/>
+      <rect x="0" y="320" width="380" height="14" fill="rgba(245,200,120,0.04)" filter="url(#softBlur)"/>
+      <rect x="0" y="428" width="380" height="14" fill="rgba(245,200,120,0.04)" filter="url(#softBlur)"/>
+
+      <!-- Row 1 books -->
+      <!-- books are rects with slight variations -->
+      <rect x="10" y="40" width="18" height="75" rx="2" fill="#3a2510"/>
+      <rect x="30" y="50" width="14" height="65" rx="2" fill="#4a3218"/>
+      <rect x="46" y="38" width="22" height="77" rx="2" fill="#2e1c0a"/>
+      <rect x="70" y="45" width="16" height="70" rx="2" fill="#5a3e20"/>
+      <rect x="88" y="36" width="20" height="79" rx="2" fill="#3c2812"/>
+      <rect x="110" y="48" width="15" height="67" rx="2" fill="#4e3520"/>
+      <rect x="127" y="40" width="24" height="75" rx="2" fill="#2a1808"/>
+      <rect x="153" y="42" width="18" height="73" rx="2" fill="#5c4028"/>
+      <rect x="173" y="36" width="20" height="79" rx="2" fill="#382212"/>
+      <rect x="195" y="44" width="16" height="71" rx="2" fill="#4a3018"/>
+      <rect x="213" y="38" width="22" height="77" rx="2" fill="#321e0c"/>
+      <rect x="237" y="46" width="18" height="69" rx="2" fill="#503a22"/>
+      <rect x="257" y="34" width="20" height="81" rx="2" fill="#3e2816"/>
+      <rect x="279" y="42" width="16" height="73" rx="2" fill="#46321c"/>
+      <rect x="297" y="38" width="24" height="77" rx="2" fill="#2e1a08"/>
+      <rect x="323" y="44" width="18" height="71" rx="2" fill="#543e26"/>
+      <rect x="343" y="36" width="26" height="79" rx="2" fill="#3a2614"/>
+
+      <!-- Subtle spine highlights -->
+      <rect x="11" y="40" width="2" height="75" rx="1" fill="rgba(184,150,122,0.15)"/>
+      <rect x="47" y="38" width="2" height="77" rx="1" fill="rgba(184,150,122,0.15)"/>
+      <rect x="128" y="40" width="2" height="75" rx="1" fill="rgba(184,150,122,0.12)"/>
+      <rect x="214" y="38" width="2" height="77" rx="1" fill="rgba(184,150,122,0.15)"/>
+      <rect x="298" y="38" width="2" height="77" rx="1" fill="rgba(184,150,122,0.15)"/>
+
+      <!-- Row 2 -->
+      <rect x="8" y="133" width="20" height="85" rx="2" fill="#3a2510"/>
+      <rect x="30" y="140" width="16" height="78" rx="2" fill="#4a3218"/>
+      <rect x="48" y="130" width="24" height="88" rx="2" fill="#2e1c0a"/>
+      <rect x="74" y="136" width="18" height="82" rx="2" fill="#5a3e20"/>
+      <rect x="94" y="128" width="22" height="90" rx="2" fill="#3c2812"/>
+      <rect x="118" y="134" width="16" height="84" rx="2" fill="#4e3520"/>
+      <rect x="136" y="130" width="26" height="88" rx="2" fill="#2a1808"/>
+      <rect x="164" y="132" width="20" height="86" rx="2" fill="#5c4028"/>
+      <rect x="186" y="128" width="22" height="90" rx="2" fill="#382212"/>
+      <rect x="210" y="136" width="18" height="82" rx="2" fill="#4a3018"/>
+      <rect x="230" y="128" width="24" height="90" rx="2" fill="#321e0c"/>
+      <rect x="256" y="134" width="20" height="84" rx="2" fill="#503a22"/>
+      <rect x="278" y="126" width="22" height="92" rx="2" fill="#3e2816"/>
+      <rect x="302" y="132" width="18" height="86" rx="2" fill="#46321c"/>
+      <rect x="322" y="128" width="26" height="90" rx="2" fill="#2e1a08"/>
+
+      <!-- Row 3 -->
+      <rect x="12" y="238" width="22" height="88" rx="2" fill="#4a3218"/>
+      <rect x="36" y="244" width="18" height="82" rx="2" fill="#3a2510"/>
+      <rect x="56" y="234" width="26" height="92" rx="2" fill="#5a3e20"/>
+      <rect x="84" y="240" width="20" height="86" rx="2" fill="#2e1c0a"/>
+      <rect x="106" y="232" width="24" height="94" rx="2" fill="#3c2812"/>
+      <rect x="132" y="238" width="18" height="88" rx="2" fill="#4e3520"/>
+      <rect x="152" y="234" width="28" height="92" rx="2" fill="#2a1808"/>
+      <rect x="182" y="236" width="22" height="90" rx="2" fill="#5c4028"/>
+      <rect x="206" y="230" width="26" height="96" rx="2" fill="#382212"/>
+      <rect x="234" y="238" width="20" height="88" rx="2" fill="#4a3018"/>
+      <rect x="256" y="232" width="24" height="94" rx="2" fill="#321e0c"/>
+      <rect x="282" y="240" width="18" height="86" rx="2" fill="#503a22"/>
+      <rect x="302" y="234" width="22" height="92" rx="2" fill="#3e2816"/>
+      <rect x="326" y="236" width="40" height="90" rx="2" fill="#3a2614"/>
+
+      <!-- Row 4 -->
+      <rect x="10" y="345" width="20" height="90" rx="2" fill="#3a2510"/>
+      <rect x="32" y="352" width="16" height="83" rx="2" fill="#4a3218"/>
+      <rect x="50" y="342" width="24" height="93" rx="2" fill="#2e1c0a"/>
+      <rect x="76" y="348" width="18" height="87" rx="2" fill="#5a3e20"/>
+      <rect x="96" y="340" width="22" height="95" rx="2" fill="#3c2812"/>
+      <rect x="120" y="346" width="16" height="89" rx="2" fill="#4e3520"/>
+      <rect x="138" y="342" width="26" height="93" rx="2" fill="#2a1808"/>
+      <rect x="166" y="344" width="20" height="91" rx="2" fill="#5c4028"/>
+      <rect x="188" y="340" width="22" height="95" rx="2" fill="#382212"/>
+      <rect x="212" y="348" width="18" height="87" rx="2" fill="#4a3018"/>
+      <rect x="232" y="340" width="24" height="95" rx="2" fill="#321e0c"/>
+      <rect x="258" y="346" width="20" height="89" rx="2" fill="#503a22"/>
+      <rect x="280" y="338" width="22" height="97" rx="2" fill="#3e2816"/>
+      <rect x="304" y="344" width="18" height="91" rx="2" fill="#46321c"/>
+      <rect x="324" y="340" width="46" height="95" rx="2" fill="#2e1a08"/>
+
+      <!-- Small plant on shelf 3 -->
+      <ellipse cx="350" cy="325" rx="15" ry="10" fill="#1a2a0a"/>
+      <ellipse cx="342" cy="318" rx="8" ry="12" fill="#243018" transform="rotate(-15 342 318)"/>
+      <ellipse cx="358" cy="316" rx="8" ry="12" fill="#1e2a12" transform="rotate(15 358 316)"/>
+      <ellipse cx="350" cy="314" rx="7" ry="11" fill="#243818"/>
+
+      <!-- Warm glow at base of shelves -->
+      <rect x="0" y="100" width="380" height="20" fill="rgba(245,200,120,0.03)" filter="url(#softBlur)"/>
+      <rect x="0" y="207" width="380" height="20" fill="rgba(245,200,120,0.03)" filter="url(#softBlur)"/>
+      <rect x="0" y="314" width="380" height="20" fill="rgba(245,200,120,0.03)" filter="url(#softBlur)"/>
+    </svg>
+  </div>
+
+  <div class="library-content">
+    <p class="section-label reveal">Library Corner</p>
+    <h2 class="section-title reveal reveal-delay-1">Stories carved<br>into <em>stone walls</em></h2>
+    <p class="section-desc reveal reveal-delay-2" style="margin-top:1.5rem;">A curated library of rare books, journals, and art folios—each shelf carved directly into the cave rock. Read in silence, surrounded by ancient warmth.</p>
+    <p class="section-desc reveal reveal-delay-3" style="margin-top:1rem;">Borrow any book. Leave one you love. The library breathes with every visitor.</p>
+  </div>
+</section>
+
+<!-- ==========================================
+     SECTION 4: PRIVATE PODS
+=========================================== -->
+<section id="pods">
+  <div class="stone-texture"></div>
+  <div class="pods-header reveal">
+    <p class="section-label" style="justify-content:center;">Private Pods</p>
+    <h2 class="section-title reveal reveal-delay-1" style="text-align:center;">Your own<br><em>world within</em></h2>
+  </div>
+
+  <div class="pods-grid">
+    <div class="pod-card reveal reveal-delay-1">
+      <div class="pod-bg">
+        <svg width="100%" height="100%" viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <radialGradient id="podGlow1" cx="50%" cy="40%" r="50%">
+              <stop offset="0%" stop-color="#3a2810"/>
+              <stop offset="100%" stop-color="#1a1005"/>
+            </radialGradient>
+          </defs>
+          <rect width="300" height="400" fill="url(#podGlow1)"/>
+          <!-- Rock walls -->
+          <path d="M0,0 Q40,20 20,80 Q10,140 30,200 Q20,260 0,300 L0,400 L300,400 L300,300 Q280,260 290,200 Q310,140 290,80 Q270,20 300,0 Z" fill="rgba(26,18,8,0.8)"/>
+          <!-- Door arch -->
+          <path d="M80,400 L80,250 Q80,180 150,180 Q220,180 220,250 L220,400" fill="rgba(58,38,18,0.9)" stroke="rgba(122,92,58,0.4)" stroke-width="2"/>
+          <!-- Door handle -->
+          <circle cx="195" cy="310" r="6" fill="rgba(184,150,122,0.6)" stroke="rgba(245,200,120,0.3)" stroke-width="1"/>
+          <!-- Light source -->
+          <circle cx="150" cy="140" r="8" fill="rgba(245,200,120,0.9)"/>
+          <circle cx="150" cy="140" r="30" fill="rgba(245,200,120,0.12)"/>
+          <circle cx="150" cy="140" r="70" fill="rgba(245,200,120,0.05)"/>
+          <!-- Floor texture -->
+          <rect x="80" y="380" width="140" height="20" fill="rgba(74,53,32,0.4)"/>
+        </svg>
+      </div>
+      <div class="pod-overlay">
+        <h3>The Amber Pod</h3>
+        <p style="font-size:0.72rem;color:rgba(240,224,200,0.5);font-weight:200;">Seats up to 4 — 2 hours min</p>
+        <span class="pod-cta">Reserve Private Space</span>
+      </div>
+    </div>
+
+    <div class="pod-card reveal reveal-delay-2">
+      <div class="pod-bg">
+        <svg width="100%" height="100%" viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <radialGradient id="podGlow2" cx="50%" cy="40%" r="50%">
+              <stop offset="0%" stop-color="#2a1e10"/>
+              <stop offset="100%" stop-color="#150e05"/>
+            </radialGradient>
+          </defs>
+          <rect width="300" height="400" fill="url(#podGlow2)"/>
+          <path d="M0,0 Q50,30 30,100 Q15,160 40,220 Q25,280 0,320 L0,400 L300,400 L300,320 Q275,280 290,220 Q315,160 300,100 Q280,30 300,0 Z" fill="rgba(20,14,6,0.85)"/>
+          <!-- Oval door -->
+          <path d="M70,400 L70,240 Q70,160 150,160 Q230,160 230,240 L230,400" fill="rgba(46,30,14,0.95)" stroke="rgba(150,110,70,0.5)" stroke-width="2.5"/>
+          <!-- Wood texture lines on door -->
+          <line x1="90" y1="260" x2="210" y2="260" stroke="rgba(122,92,58,0.15)" stroke-width="1"/>
+          <line x1="90" y1="290" x2="210" y2="290" stroke="rgba(122,92,58,0.12)" stroke-width="1"/>
+          <line x1="90" y1="320" x2="210" y2="320" stroke="rgba(122,92,58,0.1)" stroke-width="1"/>
+          <line x1="90" y1="350" x2="210" y2="350" stroke="rgba(122,92,58,0.08)" stroke-width="1"/>
+          <!-- Handle -->
+          <circle cx="205" cy="300" r="7" fill="rgba(200,168,100,0.7)"/>
+          <!-- Light -->
+          <circle cx="150" cy="120" r="10" fill="rgba(245,210,130,0.9)"/>
+          <circle cx="150" cy="120" r="40" fill="rgba(245,200,120,0.1)"/>
+          <circle cx="150" cy="120" r="90" fill="rgba(245,200,120,0.04)"/>
+        </svg>
+      </div>
+      <div class="pod-overlay">
+        <h3>The Stone Pod</h3>
+        <p style="font-size:0.72rem;color:rgba(240,224,200,0.5);font-weight:200;">Seats up to 6 — 3 hours min</p>
+        <span class="pod-cta">Reserve Private Space</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================
+     SECTION 5: PHOTOBOOTH
+=========================================== -->
+<section id="photobooth">
+  <div class="stone-texture"></div>
+
+  <div style="text-align:center;" class="reveal">
+    <p class="section-label" style="justify-content:center;">Photobooth Corner</p>
+    <div class="neon-text">Capture<br>the Moment</div>
+  </div>
+
+  <div class="camera-frame reveal reveal-delay-1" id="camera-frame" title="Click to capture!">
+    <div class="camera-crosshair">
+      <div class="crosshair-circle">
+        <div class="crosshair-line-h"></div>
+        <div class="crosshair-line-v"></div>
+      </div>
+    </div>
+    <div style="position:absolute;bottom:12px;right:14px;font-size:0.6rem;letter-spacing:0.15em;color:rgba(245,200,120,0.3);text-transform:uppercase;">Click to capture</div>
+  </div>
+
+  <div class="photo-cta reveal reveal-delay-2">
+    <button class="btn-primary" onclick="triggerFlash()">✦ Capture Moments</button>
+    <p style="font-size:0.65rem;color:rgba(240,224,200,0.3);letter-spacing:0.15em;">Premium booth available daily · 10AM – 11PM</p>
+  </div>
+</section>
+
+<!-- ==========================================
+     SECTION 6: KITCHEN / COFFEE BAR
+=========================================== -->
+<section id="kitchen">
+  <div class="stone-texture"></div>
+
+  <div class="kitchen-visual reveal">
+    <div class="shelf-row">
+      <div class="jar" style="width:28px;height:55px;"></div>
+      <div class="jar" style="width:22px;height:48px;"></div>
+      <div class="jar" style="width:32px;height:62px;"></div>
+      <div class="jar" style="width:20px;height:42px;"></div>
+      <div class="jar" style="width:28px;height:58px;"></div>
+      <div class="jar" style="width:24px;height:50px;"></div>
+      <div class="jar" style="width:30px;height:60px;"></div>
+      <div class="jar" style="width:18px;height:44px;"></div>
+      <div class="jar" style="width:26px;height:52px;"></div>
+    </div>
+    <div class="glow-line" style="top:88px;"></div>
+
+    <!-- Coffee cup + steam -->
+    <div class="coffee-cup">
+      <div class="cup-body"></div>
+      <div class="cup-saucer"></div>
+    </div>
+
+    <div class="steam-wrap">
+      <div class="steam"></div>
+      <div class="steam"></div>
+      <div class="steam"></div>
+      <div class="steam"></div>
+    </div>
+
+    <div class="counter-shape"></div>
+
+    <!-- Counter glow -->
+    <div style="position:absolute;bottom:195px;left:50%;transform:translateX(-50%);width:260px;height:2px;background:linear-gradient(90deg,transparent,rgba(245,200,120,0.4),transparent);box-shadow:0 0 20px rgba(245,200,120,0.2);"></div>
+  </div>
+
+  <div class="kitchen-content">
+    <p class="section-label reveal">Kitchen & Coffee Bar</p>
+    <h2 class="section-title reveal reveal-delay-1">Crafted with<br><em>ancient fire</em></h2>
+    <p class="section-desc reveal reveal-delay-2" style="margin-top:1.5rem;">Our baristas work beside open flame. Every cup is poured with intention—specialty beans roasted in-house, served in stone-fired ceramic.</p>
+    <div style="margin-top:2rem;" class="reveal reveal-delay-3">
+      <button class="btn-primary">View Full Menu</button>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================
+     SECTION 7: MENU PREVIEW
+=========================================== -->
+<section id="menu-preview">
+  <div class="stone-texture"></div>
+  <div style="max-width:1100px;width:100%;display:flex;flex-direction:column;gap:3rem;align-items:center;">
+    <div style="text-align:center;" class="reveal">
+      <p class="section-label" style="justify-content:center;">Our Menu</p>
+      <h2 class="section-title reveal reveal-delay-1">Flavours of the <em>earth</em></h2>
+    </div>
+
+    <div class="menu-grid">
+      <div class="menu-card reveal">
+        <div class="menu-item-icon">☕</div>
+        <div class="menu-item-name">Cave Latte</div>
+        <div class="menu-item-desc">Dark roast espresso, steamed oat milk, a whisper of smoked caramel</div>
+        <div class="menu-item-price">₹ 380</div>
+      </div>
+      <div class="menu-card reveal reveal-delay-1">
+        <div class="menu-item-icon">🍃</div>
+        <div class="menu-item-name">Stone Matcha</div>
+        <div class="menu-item-desc">Ceremonial grade matcha, coconut cream, cold-pressed honey</div>
+        <div class="menu-item-price">₹ 420</div>
+      </div>
+      <div class="menu-card reveal reveal-delay-2">
+        <div class="menu-item-icon">🌿</div>
+        <div class="menu-item-name">Ember Brew</div>
+        <div class="menu-item-desc">Cold brew concentrate, charcoal ice, Himalayan salt rim</div>
+        <div class="menu-item-price">₹ 450</div>
+      </div>
+      <div class="menu-card reveal reveal-delay-1">
+        <div class="menu-item-icon">🍰</div>
+        <div class="menu-item-name">Basque Lava Cake</div>
+        <div class="menu-item-desc">Burnt Basque cheesecake with molten dark chocolate core</div>
+        <div class="menu-item-price">₹ 520</div>
+      </div>
+      <div class="menu-card reveal reveal-delay-2">
+        <div class="menu-item-icon">🥐</div>
+        <div class="menu-item-name">Truffle Brioche</div>
+        <div class="menu-item-desc">Butter-laminated brioche, black truffle cream, fleur de sel</div>
+        <div class="menu-item-price">₹ 580</div>
+      </div>
+      <div class="menu-card reveal reveal-delay-3">
+        <div class="menu-item-icon">🫖</div>
+        <div class="menu-item-name">Cave Chai Ritual</div>
+        <div class="menu-item-desc">Saffron masala chai, clay pot–brewed, served with rose cardamom shortbread</div>
+        <div class="menu-item-price">₹ 320</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================
+     SECTION 8: BOOK / CONTACT
+=========================================== -->
+<section id="book-section">
+  <div class="stone-texture"></div>
+  <div class="book-glow"></div>
+
+  <p class="section-label reveal" style="justify-content:center;">Reserve Your Experience</p>
+  <h2 class="book-title reveal reveal-delay-1">Come<br>go <em>deeper</em></h2>
+  <p class="book-sub reveal reveal-delay-2">Caverna — Jaipur, Rajasthan</p>
+  <div class="reveal reveal-delay-3" style="display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center;margin-top:1rem;">
+    <button class="btn-primary">Book a Table</button>
+    <button class="btn-primary" style="border-color:rgba(184,150,122,0.3);color:var(--cave-stone);">Reserve a Pod</button>
+  </div>
+  <p style="font-size:0.65rem;letter-spacing:0.2em;color:rgba(240,224,200,0.2);text-transform:uppercase;margin-top:2rem;" class="reveal reveal-delay-3">Open daily 10AM – 12AM &nbsp;|&nbsp; +91 98765 43210</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Cav<em style="font-style:italic;color:var(--cave-stone)">erna</em></div>
+  <ul class="footer-links">
+    <li><a href="#">Instagram</a></li>
+    <li><a href="#">Menu</a></li>
+    <li><a href="#">Reservations</a></li>
+    <li><a href="#">Contact</a></li>
+  </ul>
+  <span class="footer-copy">© 2026 Caverna. All rights reserved.</span>
+</footer>
+
+<!-- ============================================
+     JAVASCRIPT
+============================================ -->
+<script>
+// ============================================
+// LOADER
+// ============================================
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('loader').classList.add('hidden');
+  }, 2200);
+});
+
+// ============================================
+// CUSTOM CURSOR
+// ============================================
+const cursor = document.getElementById('cursor');
+const cursorRing = document.getElementById('cursor-ring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px';
+  cursor.style.top = my + 'px';
+});
+
+function animateRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  cursorRing.style.left = rx + 'px';
+  cursorRing.style.top = ry + 'px';
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+
+document.querySelectorAll('a,button,.menu-card,.pod-card,.camera-frame,.progress-dot').forEach(el => {
+  el.addEventListener('mouseenter', () => { cursor.classList.add('hovering'); cursorRing.classList.add('hovering'); });
+  el.addEventListener('mouseleave', () => { cursor.classList.remove('hovering'); cursorRing.classList.remove('hovering'); });
+});
+
+// ============================================
+// NAVBAR SCROLL
+// ============================================
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 80);
+  updateProgress();
+});
+
+// ============================================
+// PARALLAX ON HERO TUNNEL
+// ============================================
+const tunnel = document.getElementById('tunnel');
+window.addEventListener('scroll', () => {
+  const scrollY = window.scrollY;
+  const scale = 1 + scrollY * 0.0003;
+  const opacity = Math.max(0, 1 - scrollY * 0.002);
+  tunnel.style.transform = `scale(${scale})`;
+  tunnel.style.opacity = opacity;
+});
+
+// ============================================
+// SCROLL PROGRESS DOTS
+// ============================================
+const sections = ['entrance','seating','library','pods','photobooth','kitchen','book-section'];
+const dots = document.querySelectorAll('.progress-dot');
+
+function updateProgress() {
+  const scrollPos = window.scrollY + window.innerHeight / 2;
+  sections.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const top = el.offsetTop;
+    const bot = top + el.offsetHeight;
+    dots[i].classList.toggle('active', scrollPos >= top && scrollPos < bot);
+  });
+}
+
+dots.forEach((dot, i) => {
+  dot.addEventListener('click', () => {
+    document.getElementById(sections[i])?.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+// ============================================
+// SCROLL REVEAL
+// ============================================
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+// Also observe table items
+const tableObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const items = e.target.querySelectorAll('.table-item');
+      items.forEach((item, i) => {
+        setTimeout(() => item.classList.add('visible'), i * 100);
+      });
+    }
+  });
+}, { threshold: 0.2 });
+const seatingSection = document.getElementById('seating');
+if (seatingSection) tableObserver.observe(seatingSection);
+
+// ============================================
+// CAMERA FLASH
+// ============================================
+function triggerFlash() {
+  const flash = document.getElementById('flash-overlay');
+  flash.classList.add('flashing');
+  setTimeout(() => flash.classList.remove('flashing'), 600);
+}
+document.getElementById('camera-frame').addEventListener('click', triggerFlash);
+
+// ============================================
+// AMBIENT PARTICLES CANVAS
+// ============================================
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const particles = [];
+const PARTICLE_COUNT = 60;
+
+for (let i = 0; i < PARTICLE_COUNT; i++) {
+  particles.push({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    r: Math.random() * 1.5 + 0.3,
+    speed: Math.random() * 0.4 + 0.1,
+    drift: (Math.random() - 0.5) * 0.3,
+    opacity: Math.random() * 0.5 + 0.1,
+    opacitySpeed: (Math.random() * 0.008 + 0.002) * (Math.random() > 0.5 ? 1 : -1),
+  });
+}
+
+function drawParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const scrollY = window.scrollY;
+
+  particles.forEach(p => {
+    p.y -= p.speed;
+    p.x += p.drift;
+    p.opacity += p.opacitySpeed;
+
+    if (p.opacity <= 0.05) p.opacitySpeed = Math.abs(p.opacitySpeed);
+    if (p.opacity >= 0.7) p.opacitySpeed = -Math.abs(p.opacitySpeed);
+
+    if (p.y < -10) { p.y = canvas.height + 10; p.x = Math.random() * canvas.width; }
+    if (p.x < -10) p.x = canvas.width + 10;
+    if (p.x > canvas.width + 10) p.x = -10;
+
+    ctx.save();
+    ctx.globalAlpha = p.opacity;
+    ctx.fillStyle = '#f5c878';
+    ctx.shadowColor = '#f5c878';
+    ctx.shadowBlur = 4;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+// ============================================
+// LIBRARY DUST PARTICLES
+// ============================================
+const dustContainer = document.getElementById('dust-container');
+if (dustContainer) {
+  for (let i = 0; i < 12; i++) {
+    const dust = document.createElement('div');
+    dust.className = 'dust-particle';
+    const dx = (Math.random() - 0.5) * 60;
+    const dy = -(Math.random() * 100 + 40);
+    dust.style.cssText = `
+      left: ${Math.random() * 100}%;
+      top: ${Math.random() * 100}%;
+      --dx: ${dx}px;
+      --dy: ${dy}px;
+      animation-duration: ${Math.random() * 6 + 4}s;
+      animation-delay: ${Math.random() * 6}s;
+      width: ${Math.random() * 2 + 1}px;
+      height: ${Math.random() * 2 + 1}px;
+    `;
+    dustContainer.appendChild(dust);
+  }
+}
+
+// ============================================
+// SOUND TOGGLE (ambient cave audio)
+// ============================================
+let audioCtx = null;
+let audioNodes = [];
+let soundOn = false;
+
+function createCaveAmbience() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // Low rumble
+  function createRumble(freq, gain) {
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    filter.type = 'lowpass';
+    filter.frequency.value = 120;
+    gainNode.gain.value = gain;
+
+    osc.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    osc.start();
+    return { osc, gainNode };
+  }
+
+  // Very subtle noise for "cave atmosphere"
+  const bufferSize = audioCtx.sampleRate * 4;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.015;
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = buffer;
+  noise.loop = true;
+  const noiseFilter = audioCtx.createBiquadFilter();
+  noiseFilter.type = 'bandpass';
+  noiseFilter.frequency.value = 200;
+  noiseFilter.Q.value = 0.5;
+  const noiseGain = audioCtx.createGain();
+  noiseGain.gain.value = 0.06;
+  noise.connect(noiseFilter);
+  noiseFilter.connect(noiseGain);
+  noiseGain.connect(audioCtx.destination);
+  noise.start();
+
+  const r1 = createRumble(40, 0.03);
+  const r2 = createRumble(60, 0.015);
+  const r3 = createRumble(80, 0.008);
+
+  audioNodes = [r1, r2, r3, { osc: noise, gainNode: noiseGain }];
+}
+
+function stopCaveAmbience() {
+  audioNodes.forEach(({ gainNode }) => {
+    if (gainNode) gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5);
+  });
+}
+
+function startCaveAmbience() {
+  audioNodes.forEach(({ gainNode }) => {
+    if (gainNode) gainNode.gain.setTargetAtTime(gainNode.gain.defaultValue || 0.03, audioCtx.currentTime, 0.5);
+  });
+}
+
+document.getElementById('sound-toggle').addEventListener('click', () => {
+  soundOn = !soundOn;
+  const btn = document.getElementById('sound-toggle');
+  btn.classList.toggle('active', soundOn);
+  const waves = document.getElementById('sound-waves');
+
+  if (soundOn) {
+    createCaveAmbience();
+    startCaveAmbience();
+    waves.style.opacity = '1';
+  } else {
+    stopCaveAmbience();
+    waves.style.opacity = '0.3';
+  }
+});
+
+// ============================================
+// SMOOTH INERTIA SCROLL (subtle)
+// ============================================
+let targetScrollY = 0;
+let currentScrollY = 0;
+let isScrolling = false;
+
+// Only apply on non-touch devices
+if (!('ontouchstart' in window)) {
+  window.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    targetScrollY += e.deltaY * 0.85;
+    targetScrollY = Math.max(0, Math.min(targetScrollY, document.body.scrollHeight - window.innerHeight));
+    if (!isScrolling) {
+      isScrolling = true;
+      smoothScroll();
+    }
+  }, { passive: false });
+
+  function smoothScroll() {
+    currentScrollY += (targetScrollY - currentScrollY) * 0.08;
+    window.scrollTo(0, currentScrollY);
+    if (Math.abs(targetScrollY - currentScrollY) > 0.5) {
+      requestAnimationFrame(smoothScroll);
+    } else {
+      isScrolling = false;
+      currentScrollY = targetScrollY;
+      window.scrollTo(0, currentScrollY);
+    }
+  }
+
+  // Sync on keyboard/other scroll
+  window.addEventListener('scroll', () => {
+    if (!isScrolling) {
+      targetScrollY = window.scrollY;
+      currentScrollY = window.scrollY;
+    }
+  });
+}
+
+// ============================================
+// HANGING LIGHT SWAY INTERACTION
+// ============================================
+document.addEventListener('mousemove', (e) => {
+  const lights = document.querySelectorAll('.hanging-light');
+  const cx = window.innerWidth / 2;
+  const offset = (e.clientX - cx) / cx * 3;
+  lights.forEach(l => {
+    l.style.transform = `translateX(-50%) rotate(${offset}deg)`;
+  });
+});
+
+</script>
+</body>
+</html>
